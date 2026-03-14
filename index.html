@@ -1,138 +1,155 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>O‑INK · The Kinetic Ink Studio</title>
-  <!-- Fonts & base styling -->
+  <title>O‑INK · kinetic portfolio</title>
+  <!-- Fonts & base -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..800;1,14..32,300..800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
   <style>
-    /* RESET & GLOBAL */
+    /* ---------- RESET + GLOBAL VARIABLES ---------- */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      cursor: none; /* hide default cursor – we'll draw our own */
+      cursor: none;
+    }
+
+    :root {
+      --bg-dark: #0a0a0a;
+      --bg-light: #fafafa;
+      --text-dark: #f0f0f0;
+      --text-light: #111111;
+      --orange: #ff4d0d;
+      --orange-glow: 0 0 30px rgba(255, 77, 13, 0.3);
+      --card-bg-dark: #1a1a1a;
+      --card-bg-light: #eaeaea;
+      --transition-slow: 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      --transition-fast: 0.2s ease-out;
     }
 
     body {
-      background-color: #1A1A1A; /* matte charcoal */
-      color: #F5F5F5;
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
       font-family: "Inter", sans-serif;
-      transition: background-color 0.6s cubic-bezier(0.23, 1, 0.32, 1), color 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+      font-weight: 300;
+      line-height: 1.5;
+      transition: background-color 0.5s ease, color 0.5s ease;
       overflow-x: hidden;
     }
 
-    /* LIGHT MODE (toggled by .light-mode class) */
     body.light-mode {
-      background-color: #F5F5F5;
-      color: #1A1A1A;
+      background-color: var(--bg-light);
+      color: var(--text-light);
     }
 
-    body.light-mode .card,
-    body.light-mode .gallery-item {
-      background-color: #e0e0e0;
-    }
-
-    /* custom selection */
     ::selection {
-      background: #FF5F1F;
-      color: #1A1A1A;
+      background: var(--orange);
+      color: #000;
     }
 
-    /* SMOOTH SCROLL container */
-    html.lenis {
-      height: auto;
-    }
-    .lenis.lenis-smooth {
-      scroll-behavior: auto;
-    }
-    .lenis.lenis-smooth [data-lenis-prevent] {
-      overscroll-behavior: contain;
-    }
+    /* LENIS smooth scroll */
+    html.lenis { height: auto; }
+    .lenis.lenis-smooth { scroll-behavior: auto; }
 
-    /* ORANGE THREAD CURSOR */
+    /* ---------- CUSTOM CURSOR ---------- */
     .cursor {
       position: fixed;
       width: 8px;
       height: 8px;
-      background: #FF5F1F;
+      background: var(--orange);
       border-radius: 50%;
       pointer-events: none;
       z-index: 9999;
       transform: translate(-50%, -50%);
-      transition: width 0.2s, height 0.2s, backdrop-filter 0.2s, background 0.2s;
+      transition: width 0.3s, height 0.3s, backdrop-filter 0.3s, background 0.3s, filter 0.3s, box-shadow 0.3s;
       backdrop-filter: invert(0);
       will-change: transform, width, height;
-      mix-blend-mode: normal; /* we'll use backdrop-filter for inversion */
+      box-shadow: 0 0 15px var(--orange);
+      filter: blur(0.5px);
     }
 
     .cursor.expanded {
-      width: 60px;
-      height: 60px;
-      backdrop-filter: invert(1); /* inverts everything behind the orange circle */
-      background: #FF5F1F;        /* stays orange */
+      width: 70px;
+      height: 70px;
+      backdrop-filter: invert(1) blur(2px);
+      background: var(--orange);
+      box-shadow: 0 0 40px var(--orange);
+      filter: blur(1px);
     }
 
-    /* hide cursor when it leaves window */
-    .cursor.hide {
-      opacity: 0;
-    }
+    .cursor.hide { opacity: 0; }
 
-    /* INK-DROP TRANSITION OVERLAY */
+    /* ---------- INK DROP OVERLAY ---------- */
     .ink-overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: #FF5F1F;
+      background: var(--orange);
       border-radius: 50%;
       transform: scale(0);
       pointer-events: none;
       z-index: 10000;
-      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
       will-change: transform;
+      filter: blur(20px);
     }
+    .ink-overlay.active { transform: scale(5); }
 
-    .ink-overlay.active {
-      transform: scale(3); /* covers the screen */
-    }
-
-    /* HIGHlIGHTER MODE WAVE */
+    /* ---------- MODE WAVE ---------- */
     .mode-wave {
       position: fixed;
       top: 0;
       left: -100%;
       width: 100%;
       height: 100%;
-      background: #FF5F1F;
+      background: var(--orange);
       z-index: 10001;
       pointer-events: none;
-      transition: left 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: left 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+      filter: brightness(1.2);
     }
-    .mode-wave.active {
-      left: 100%;
-    }
+    .mode-wave.active { left: 100%; }
 
-    /* TYPOGRAPHY */
+    /* ---------- TYPOGRAPHY ---------- */
     h1, h2, h3 {
       font-family: "Playfair Display", serif;
       font-weight: 900;
       letter-spacing: -0.02em;
     }
 
+    h2 {
+      font-size: 4.5rem;
+      margin-bottom: 2.5rem;
+      line-height: 1;
+      position: relative;
+      display: inline-block;
+    }
+    h2::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 0;
+      width: 80px;
+      height: 3px;
+      background: var(--orange);
+      transition: width 0.3s;
+    }
+    h2:hover::after { width: 140px; }
+
     .section {
-      padding: 5rem 2rem;
-      max-width: 1400px;
+      padding: 7rem 3rem;
+      max-width: 1600px;
       margin: 0 auto;
       position: relative;
       z-index: 2;
     }
 
-    /* HERO */
+    /* ---------- HERO ---------- */
     .hero {
       min-height: 100vh;
       display: flex;
@@ -142,7 +159,6 @@
       position: relative;
       overflow: hidden;
     }
-
     .hero canvas {
       position: absolute;
       top: 0;
@@ -152,48 +168,100 @@
       z-index: -1;
       pointer-events: none;
     }
-
     .hero h1 {
-      font-size: clamp(4rem, 15vw, 10rem);
-      line-height: 0.9;
-      color: #1A1A1A; /* black in default mode */
-      transition: color 0.3s;
-      text-shadow: 0 0 20px rgba(255,95,31,0.2);
+      font-size: clamp(5rem, 16vw, 12rem);
+      line-height: 0.85;
+      color: var(--bg-light);
+      transition: color 0.3s, text-shadow 0.3s;
+      text-shadow: 0 0 30px var(--orange);
+      mix-blend-mode: difference;
+      letter-spacing: -0.03em;
     }
     body.light-mode .hero h1 {
-      color: #F5F5F5; /* white in light mode – inverted logic to maintain contrast? Actually light mode background is white, so text should be black. But we want the headline to be black in light mode too? Let's keep it simple: light mode text dark. */
-    }
-    body.light-mode .hero h1 {
-      color: #1A1A1A;
+      color: var(--bg-dark);
+      text-shadow: 0 0 30px var(--orange);
     }
 
-    /* WORK GALLERY */
+    /* ---------- WORK SECTION (projects + old effects) ---------- */
     .gallery-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 2rem;
       margin-top: 3rem;
     }
 
     .gallery-item {
-      aspect-ratio: 4/3;
-      background: #333;
-      border-radius: 4px;
-      overflow: hidden;
       position: relative;
-      filter: grayscale(1);
-      transition: filter 0.5s;
+      aspect-ratio: 4/3;
+      overflow: hidden;
+      background: var(--card-bg-dark);
+      filter: grayscale(100%) contrast(1.1);
+      transition: filter 0.5s ease, transform 0.4s;
+      transform: scale(1);
+      box-shadow: 0 20px 30px -20px rgba(0,0,0,0.5);
+      cursor: none;
     }
-
+    body.light-mode .gallery-item {
+      background: var(--card-bg-light);
+    }
     .gallery-item img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
+      transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
     }
 
+    /* Overlay */
+    .gallery-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(10, 10, 10, 0.7);
+      backdrop-filter: blur(2px);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 2rem;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      color: #fff;
+      pointer-events: none;
+      z-index: 1;
+    }
+    body.light-mode .gallery-overlay {
+      background: rgba(250, 250, 250, 0.8);
+      color: #111;
+    }
+    .gallery-overlay h3 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      transform: translateY(20px);
+      transition: transform 0.4s 0.1s;
+    }
+    .gallery-overlay p {
+      font-size: 1rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.8;
+      transform: translateY(20px);
+      transition: transform 0.4s 0.15s;
+    }
+
+    /* Old effects: grayscale removal, scale, snake border */
     .gallery-item:hover {
-      filter: grayscale(0);
+      filter: grayscale(0%) contrast(1);
+      transform: scale(1.02);
+    }
+    .gallery-item:hover img {
+      transform: scale(1.1);
+    }
+    .gallery-item:hover .gallery-overlay {
+      opacity: 1;
+    }
+    .gallery-item:hover .gallery-overlay h3,
+    .gallery-item:hover .gallery-overlay p {
+      transform: translateY(0);
     }
 
     .gallery-item::after {
@@ -201,228 +269,387 @@
       position: absolute;
       inset: 0;
       border: 2px solid transparent;
-      transition: border 0.3s;
+      transition: border 0.3s, box-shadow 0.3s;
       pointer-events: none;
+      z-index: 2;
     }
-
     .gallery-item:hover::after {
-      border: 2px solid #FF5F1F;
+      border-color: var(--orange);
       animation: snakeBorder 1.5s linear infinite;
     }
 
     @keyframes snakeBorder {
-      0% { border-color: #FF5F1F; box-shadow: 0 0 0 0 #FF5F1F; }
-      50% { border-color: #FF5F1F; box-shadow: 0 0 15px 5px #FF5F1F; }
-      100% { border-color: #FF5F1F; box-shadow: 0 0 0 0 #FF5F1F; }
+      0% { border-color: var(--orange); box-shadow: 0 0 0 0 var(--orange); }
+      50% { border-color: var(--orange); box-shadow: 0 0 20px 8px var(--orange); }
+      100% { border-color: var(--orange); box-shadow: 0 0 0 0 var(--orange); }
     }
 
-    /* SERVICES */
-    .services-grid {
+    /* ---------- ABOUT ME SECTION ---------- */
+    .about-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2rem;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
       margin-top: 3rem;
+      align-items: start;
     }
 
-    .service-card {
-      background: rgba(255,255,255,0.05);
-      padding: 2rem;
-      border-radius: 8px;
-      transition: all 0.4s;
-      cursor: pointer;
-      border: 1px solid transparent;
+    .about-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 77, 13, 0.15);
+      padding: 2.5rem;
+      border-radius: 4px;
+      backdrop-filter: blur(4px);
+      transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
     }
 
-    body.light-mode .service-card {
-      background: rgba(0,0,0,0.03);
+    .about-card:hover {
+      border-color: var(--orange);
+      transform: translateY(-5px);
+      box-shadow: 0 20px 30px -20px var(--orange);
     }
 
-    .service-card.selected {
-      background: #1A1A1A;
-      color: #FF5F1F;
-      border-color: #FF5F1F;
-      box-shadow: 0 0 30px rgba(255,95,31,0.3);
+    body.light-mode .about-card {
+      background: rgba(0, 0, 0, 0.02);
+      border-color: rgba(255, 77, 13, 0.25);
     }
 
-    body.light-mode .service-card.selected {
-      background: #F5F5F5;
-      color: #FF5F1F;
-      border-color: #FF5F1F;
+    .about-name {
+      font-size: 2.8rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      line-height: 1.1;
     }
 
-    /* CONTACT */
+    .about-name span {
+      color: var(--orange);
+      font-weight: 900;
+    }
+
+    .about-handle {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 1.2rem 0;
+      font-size: 1.2rem;
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(255,77,13,0.3);
+      padding-bottom: 0.5rem;
+      width: fit-content;
+      transition: border-color 0.2s;
+    }
+
+    .about-handle:hover {
+      border-bottom-color: var(--orange);
+    }
+
+    .about-handle .orange {
+      color: var(--orange);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    .about-skills {
+      margin: 2rem 0 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .skill-tag {
+      background: rgba(255, 77, 13, 0.1);
+      border: 1px solid rgba(255, 77, 13, 0.3);
+      padding: 0.4rem 1.2rem;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
+    }
+
+    .skill-tag:hover {
+      background: var(--orange);
+      color: #0a0a0a;
+      border-color: var(--orange);
+    }
+
+    body.light-mode .skill-tag:hover {
+      color: #fafafa;
+    }
+
+    .about-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      border-bottom: 1px solid rgba(255,77,13,0.2);
+      padding-bottom: 0.75rem;
+    }
+
+    .stat-label {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.7;
+      min-width: 100px;
+    }
+
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 600;
+      font-family: "Playfair Display", serif;
+      color: var(--orange);
+    }
+
+    .bio-text {
+      font-size: 1.2rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+      font-weight: 300;
+    }
+
+    /* ---------- CONTACT ---------- */
     .contact-field {
-      margin-top: 4rem;
+      margin-top: 5rem;
       text-align: center;
     }
-
     .big-input {
       width: 100%;
       background: transparent;
       border: none;
-      border-bottom: 2px solid #FF5F1F;
-      font-size: clamp(2rem, 8vw, 6rem);
+      border-bottom: 1px solid rgba(255,77,13,0.3);
+      font-size: clamp(2.5rem, 8vw, 7rem);
       font-family: "Playfair Display", serif;
+      font-weight: 700;
       color: inherit;
-      padding: 0.5rem 0;
+      padding: 1rem 0.5rem;
       outline: none;
-      transition: all 0.2s;
+      transition: border 0.3s, transform 0.2s, box-shadow 0.3s;
+      text-align: center;
+      letter-spacing: -0.02em;
     }
-
     .big-input:focus {
-      border-bottom-color: #FF5F1F;
+      border-bottom-color: var(--orange);
+      border-bottom-width: 2px;
       transform: scale(1.02);
+      box-shadow: 0 20px 30px -30px var(--orange);
     }
-
     .drip-effect {
-      display: inline-block;
-      animation: drip 0.15s ease-out;
+      animation: drip 0.2s ease-out;
     }
-
     @keyframes drip {
-      0% { transform: translateY(0); }
-      30% { transform: translateY(5px); opacity: 0.9; }
-      100% { transform: translateY(0); }
+      0% { transform: translateY(0) scale(1); }
+      30% { transform: translateY(8px) scale(1.02); opacity: 0.9; }
+      100% { transform: translateY(0) scale(1); }
     }
 
-    /* TOGGLE */
+    /* ---------- TOGGLE & NAV ---------- */
     .mode-toggle {
       position: fixed;
       top: 2rem;
       right: 2rem;
       z-index: 100;
-      background: #FF5F1F;
-      color: #1A1A1A;
-      border: none;
-      padding: 0.8rem 1.5rem;
+      background: transparent;
+      border: 1px solid var(--orange);
+      color: var(--orange);
+      padding: 0.6rem 1.8rem;
       border-radius: 40px;
-      font-weight: bold;
-      letter-spacing: 1px;
+      font-weight: 400;
+      letter-spacing: 2px;
       cursor: pointer;
       overflow: hidden;
-      transition: transform 0.2s;
+      transition: all 0.3s;
+      backdrop-filter: blur(4px);
+      font-size: 0.9rem;
+      text-transform: uppercase;
     }
-
     .mode-toggle:hover {
+      background: var(--orange);
+      color: #0a0a0a;
       transform: scale(1.05);
+      box-shadow: 0 0 30px var(--orange);
+    }
+    body.light-mode .mode-toggle:hover {
+      color: #fafafa;
+    }
+    nav {
+      position: fixed;
+      top: 2rem;
+      left: 2rem;
+      z-index: 100;
+      color: var(--orange);
+      font-weight: 500;
+      letter-spacing: 4px;
+      font-size: 1.2rem;
+      mix-blend-mode: difference;
+      cursor: none;
     }
 
-    /* INK THREAD LINKS (for hover effect) */
-    a, button, .gallery-item, .service-card {
-      cursor: none; /* we handle cursor */
-    }
-
-    /* scroll typography demo – we'll use GSAP to stretch h2 on scroll */
-    h2 {
-      font-size: 3rem;
-      margin-bottom: 2rem;
-      display: inline-block;
-      transition: font-stretch 0.1s; /* will be overridden by GSAP */
-    }
-
-    /* ----- FOOTER (development notice) ----- */
+    /* ---------- FOOTER ---------- */
     .dev-footer {
       text-align: center;
-      padding: 3rem 2rem 4rem;
-      font-size: 0.95rem;
-      opacity: 0.8;
-      border-top: 1px dashed rgba(255,95,31,0.3);
-      margin-top: 2rem;
-      letter-spacing: 0.3px;
+      padding: 5rem 2rem 6rem;
+      font-size: 0.9rem;
+      opacity: 0.6;
+      border-top: 1px solid rgba(255,77,13,0.2);
+      margin-top: 3rem;
+      letter-spacing: 1px;
+      font-weight: 300;
+      transition: opacity 0.3s;
     }
-    .dev-footer span.orange {
-      color: #FF5F1F;
-      font-weight: 600;
-    }
-    body.light-mode .dev-footer {
-      border-top-color: rgba(255,95,31,0.5);
+    .dev-footer:hover { opacity: 1; }
+    .dev-footer .orange {
+      color: var(--orange);
+      font-weight: 500;
     }
   </style>
-  <!-- GSAP & Lenis -->
+  <!-- GSAP, Lenis, Three.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script src="https://unpkg.com/lenis@1.1.5/dist/lenis.min.js"></script>
-  <!-- Three.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-  <!-- Ink drop transition overlay -->
+  <!-- Overlays -->
   <div class="ink-overlay" id="inkOverlay"></div>
-
-  <!-- Highlighter mode wave -->
   <div class="mode-wave" id="modeWave"></div>
-
-  <!-- Custom cursor -->
   <div class="cursor" id="customCursor"></div>
 
-  <!-- Mode toggle -->
+  <!-- Minimal nav & toggle -->
+  <nav>O‑INK</nav>
   <button class="mode-toggle" id="modeToggle">🌑 INK</button>
 
-  <!-- Navigation (simple) -->
-  <nav style="position:fixed; top:2rem; left:2rem; z-index:100; color:#FF5F1F; font-weight:bold;">O-INK</nav>
-
-  <main data-lenis-prevent>
-    <!-- HERO -->
+  <main id="main">
+    <!-- HERO with blob -->
     <section class="hero" id="hero">
       <canvas id="heroCanvas"></canvas>
-      <h1 id="heroHeadline">INK<br>IS MOTION</h1>
+      <h1 id="heroHeadline">INK<br>MOTION</h1>
     </section>
 
-    <!-- WORK -->
+    <!-- WORK SECTION – developer + designer projects -->
     <section class="section" id="work">
       <h2>Work</h2>
       <div class="gallery-grid">
-        <div class="gallery-item"><img src="https://picsum.photos/600/400?random=1" alt="work"></div>
-        <div class="gallery-item"><img src="https://picsum.photos/600/400?random=2" alt="work"></div>
-        <div class="gallery-item"><img src="https://picsum.photos/600/400?random=3" alt="work"></div>
-        <div class="gallery-item"><img src="https://picsum.photos/600/400?random=4" alt="work"></div>
+        <!-- Web Designer: Portfolio 2025 -->
+        <div class="gallery-item" data-title="Portfolio 2025" data-cat="Web Design">
+          <img src="https://picsum.photos/id/30/800/600" alt="Portfolio 2025 – web design concept" loading="lazy">
+          <div class="gallery-overlay">
+            <h3>Portfolio 2025</h3>
+            <p>Web Design</p>
+          </div>
+        </div>
+        <!-- Developer: CodePen Lab -->
+        <div class="gallery-item" data-title="CodePen Lab" data-cat="Dev Experiments">
+          <img src="https://picsum.photos/id/26/800/600" alt="CodePen Lab – interactive code experiments" loading="lazy">
+          <div class="gallery-overlay">
+            <h3>CodePen Lab</h3>
+            <p>Dev Experiments</p>
+          </div>
+        </div>
+        <!-- Web Designer: UI Library -->
+        <div class="gallery-item" data-title="UI Library" data-cat="Component Design">
+          <img src="https://picsum.photos/id/63/800/600" alt="UI Library – component design system" loading="lazy">
+          <div class="gallery-overlay">
+            <h3>UI Library</h3>
+            <p>Component Design</p>
+          </div>
+        </div>
+        <!-- Developer: Genuary Sketches -->
+        <div class="gallery-item" data-title="Genuary Sketches" data-cat="Generative Art">
+          <img src="https://picsum.photos/id/42/800/600" alt="Genuary Sketches – generative art" loading="lazy">
+          <div class="gallery-overlay">
+            <h3>Genuary Sketches</h3>
+            <p>Generative Art</p>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- SERVICES -->
-    <section class="section" id="services">
-      <h2>Services</h2>
-      <div class="services-grid" id="servicesGrid">
-        <div class="service-card" data-service="brand">Brand Identity</div>
-        <div class="service-card" data-service="motion">Motion Design</div>
-        <div class="service-card" data-service="digital">Digital Experiences</div>
+    <!-- ABOUT ME SECTION -->
+    <section class="section" id="about">
+      <h2>About me</h2>
+      <div class="about-grid">
+        <!-- left column: personal & social -->
+        <div class="about-card">
+          <div class="about-name">
+            <span>Uday Raj</span> Shukla
+          </div>
+          <div class="bio-text">
+            Developer & designer with 3 years of coding experience. I craft minimal, kinetic web experiences.
+          </div>
+          <!-- GitHub -->
+          <a href="#" class="about-handle" target="_blank" rel="noopener">
+            <span class="orange">GH</span> krishu745956-hash
+          </a>
+          <!-- Instagram -->
+          <a href="#" class="about-handle" target="_blank" rel="noopener">
+            <span class="orange">IG</span> uday_raj_shukla
+          </a>
+          <!-- skills tags -->
+          <div class="about-skills">
+            <span class="skill-tag">HTML (int/ext CSS)</span>
+            <span class="skill-tag">JavaScript</span>
+            <span class="skill-tag">Web design</span>
+            <span class="skill-tag">Responsive</span>
+            <span class="skill-tag">GSAP</span>
+            <span class="skill-tag">Three.js</span>
+          </div>
+        </div>
+        <!-- right column: stats & experience -->
+        <div class="about-card">
+          <div class="about-stats">
+            <div class="stat-item">
+              <span class="stat-label">Experience</span>
+              <span class="stat-value">3 years</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Focus</span>
+              <span class="stat-value">Frontend + motion</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Class</span>
+              <span class="stat-value">12 (I hope so)</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Current stack</span>
+              <span class="stat-value">HTML/CSS/JS</span>
+            </div>
+          </div>
+          <p style="margin-top: 2rem; font-style: italic; opacity: 0.8;">
+            “Building with ink, code, and curiosity.”
+          </p>
+        </div>
       </div>
     </section>
 
     <!-- CONTACT -->
     <section class="section" id="contact">
-      <h2>Drop us a line</h2>
+      <h2>Drop a line</h2>
       <div class="contact-field">
-        <input type="text" class="big-input" id="dripInput" placeholder="Your message..." autocomplete="off">
+        <input type="text" class="big-input" id="dripInput" placeholder="type here..." autocomplete="off">
       </div>
     </section>
   </main>
 
-  <!-- FOOTER with development message & credit (Uday Raj Shukla) -->
   <footer class="dev-footer">
-    <span class="orange">⚡ O‑INK · project development phase</span> — full interactive rollout scheduled for <span class="orange">July 2026</span> · by Uday Raj Shukla
+    <span class="orange">⚡ O‑INK · project development phase</span> — full interactive rollout <span class="orange">July 2026</span> · by Uday Raj Shukla
   </footer>
 
   <script>
     (function() {
-      // ---------- INIT LENIS (smooth scroll) ----------
-      const lenis = new Lenis({
-        duration: 1.2,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        orientation: 'vertical',
-        smoothWheel: true,
-      });
-      function raf(time) {
-        lenis.raf(time);
-        requestAnimationFrame(raf);
-      }
+      // ---------- LENIS ----------
+      const lenis = new Lenis({ duration: 1.2, easing: (t) => 1 - Math.pow(1 - t, 3) });
+      function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
       requestAnimationFrame(raf);
 
-      // ---------- CUSTOM CURSOR (Orange Thread) ----------
+      // ---------- CUSTOM CURSOR ----------
       const cursor = document.getElementById('customCursor');
-      let mouseX = 0, mouseY = 0;
-      let cursorVisible = true;
-
+      let mouseX = 0, mouseY = 0, cursorVisible = true;
       document.addEventListener('mousemove', (e) => {
         mouseX = e.clientX;
         mouseY = e.clientY;
@@ -432,228 +659,175 @@
           cursorVisible = true;
         }
       });
-
       document.addEventListener('mouseleave', () => {
         cursor.classList.add('hide');
         cursorVisible = false;
       });
-
-      // Hover elements to expand cursor and invert
-      const hoverables = document.querySelectorAll('a, button, .gallery-item, .service-card, .mode-toggle, .big-input');
+      const hoverables = document.querySelectorAll('a, button, .gallery-item, .about-card, .mode-toggle, .big-input');
       hoverables.forEach(el => {
         el.addEventListener('mouseenter', () => cursor.classList.add('expanded'));
         el.addEventListener('mouseleave', () => cursor.classList.remove('expanded'));
       });
 
-      // ---------- THREE.JS BLOB (hero canvas) ----------
+      // ---------- THREE.JS BLOB ----------
       const canvas = document.getElementById('heroCanvas');
       const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+      const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, powerPreference: "high-performance" });
       renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-      // Create a sphere with custom shader for liquid effect
-      const geometry = new THREE.SphereGeometry(2, 128, 128);
-
-      // Vertex shader: displace based on time + mouse
+      const geometry = new THREE.SphereGeometry(2.2, 200, 200);
       const vertexShader = `
         uniform float uTime;
         uniform vec2 uMouse;
         varying float vDisplace;
         void main() {
           vec3 pos = position;
-          float noise = sin(pos.x * 3.0 + uTime) * cos(pos.y * 3.0 + uTime) * sin(pos.z * 3.0 + uTime);
-          noise += sin(pos.x * 5.0 + uTime*1.3) * cos(pos.y * 5.0 + uTime*0.7) * sin(pos.z * 5.0 + uTime*2.0);
-          // influence from mouse (normalized direction)
-          float mouseInfluence = sin(pos.x * 2.0 + uMouse.x * 10.0) * cos(pos.z * 2.0 + uMouse.y * 10.0);
-          float displace = noise * 0.3 + mouseInfluence * 0.2;
+          float noise1 = sin(pos.x * 4.0 + uTime) * cos(pos.y * 4.0 + uTime*0.8) * sin(pos.z * 4.0 + uTime*1.2);
+          float noise2 = sin(pos.x * 8.0 + uTime*1.5) * cos(pos.z * 8.0 - uTime) * sin(pos.y * 6.0);
+          float mouseInfluence = sin(pos.x * 5.0 + uMouse.x*12.0) * cos(pos.z * 5.0 + uMouse.y*12.0) * 0.2;
+          float displace = noise1 * 0.4 + noise2 * 0.2 + mouseInfluence;
           vDisplace = displace;
           pos += normal * displace;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
         }
       `;
-
       const fragmentShader = `
         uniform float uTime;
         varying float vDisplace;
         void main() {
-          float intensity = 0.8 + 0.5 * sin(vDisplace * 10.0 + uTime * 2.0);
-          gl_FragColor = vec4(1.0, 0.37, 0.12, intensity * 0.6); // Orange with alpha
+          float intensity = 0.7 + 0.5 * sin(vDisplace * 12.0 + uTime * 3.0);
+          gl_FragColor = vec4(1.0, 0.3, 0.05, intensity * 0.55);
         }
       `;
-
       const material = new THREE.ShaderMaterial({
-        vertexShader: vertexShader,
-        fragmentShader: fragmentShader,
+        vertexShader, fragmentShader,
         transparent: true,
         blending: THREE.NormalBlending,
         side: THREE.DoubleSide,
-        uniforms: {
-          uTime: { value: 0 },
-          uMouse: { value: new THREE.Vector2(0, 0) }
-        }
+        uniforms: { uTime: { value: 0 }, uMouse: { value: new THREE.Vector2(0, 0) } }
       });
-
       const sphere = new THREE.Mesh(geometry, material);
       scene.add(sphere);
+      camera.position.z = 5.5;
 
-      camera.position.z = 5;
-
-      // Mouse tracking for blob
       const mouse = new THREE.Vector2(0, 0);
       window.addEventListener('mousemove', (e) => {
         mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
       });
 
-      // Animation loop
       let clock = new THREE.Clock();
       function animateBlob() {
         requestAnimationFrame(animateBlob);
-        const delta = clock.getDelta();
-        const elapsedTime = performance.now() / 1000; // seconds
-
-        // Update uniforms
+        const elapsedTime = performance.now() / 1000;
         material.uniforms.uTime.value = elapsedTime;
-        material.uniforms.uMouse.value.lerp(mouse, 0.05);
-
-        // subtle rotation
-        sphere.rotation.y += 0.002;
-        sphere.rotation.x += 0.001;
-
+        material.uniforms.uMouse.value.lerp(mouse, 0.03);
+        sphere.rotation.y += 0.0015;
+        sphere.rotation.x += 0.0005;
         renderer.render(scene, camera);
       }
       animateBlob();
 
-      // resize handler
       window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
       });
 
-      // ---------- GSAP SCROLL TRIGGER (variable typography) ----------
+      // ---------- GSAP SCROLL TRIGGER ----------
       gsap.registerPlugin(ScrollTrigger);
 
-      // Stretch headline on scroll
+      // Hero stretch
       gsap.to("#heroHeadline", {
-        scrollTrigger: {
-          trigger: "body",
-          start: "top top",
-          end: "bottom bottom",
-          scrub: 1.5,
-        },
-        fontStretch: "expanded",  // only works if font supports it – we'll use scaleX as fallback
+        scrollTrigger: { trigger: "body", start: "top top", end: "bottom bottom", scrub: 1.5 },
         scaleX: 1.3,
         transformOrigin: "center center",
         ease: "none"
       });
 
-      // Also stretch section titles a bit
+      // Section titles stretch
       gsap.utils.toArray("h2").forEach(title => {
         gsap.to(title, {
-          scrollTrigger: {
-            trigger: title,
-            start: "top bottom",
-            end: "bottom top",
-            scrub: 1,
-          },
-          scaleX: 1.2,
+          scrollTrigger: { trigger: title, start: "top 85%", end: "bottom 20%", scrub: 1 },
+          scaleX: 1.15,
           transformOrigin: "left center",
         });
       });
 
-      // ---------- SERVICES CLICK (background shift) ----------
-      const serviceCards = document.querySelectorAll('.service-card');
-      serviceCards.forEach(card => {
-        card.addEventListener('click', function() {
-          // remove selected from others
-          serviceCards.forEach(c => c.classList.remove('selected'));
-          this.classList.add('selected');
-          // optional: change body background? No, keep consistent.
+      // Fade-in sections
+      gsap.utils.toArray(".section").forEach(section => {
+        gsap.from(section, {
+          scrollTrigger: { trigger: section, start: "top 85%" },
+          opacity: 0,
+          y: 40,
+          duration: 1.2,
+          ease: "power2.out"
         });
       });
 
-      // ---------- CONTACT INPUT DRIP EFFECT ----------
-      const input = document.getElementById('dripInput');
-      input.addEventListener('input', function(e) {
-        // simple drip: add class to each character? too heavy.
-        // we'll add a class to the input that triggers a shake/drip
-        this.classList.add('drip-effect');
-        setTimeout(() => this.classList.remove('drip-effect'), 150);
+      // Gallery items stagger reveal
+      gsap.from(".gallery-item", {
+        scrollTrigger: { trigger: "#work", start: "top 80%" },
+        opacity: 0,
+        y: 60,
+        duration: 1,
+        stagger: 0.15,
+        ease: "power3.out"
       });
 
-      // ---------- HIGHLIGHTER MODE TOGGLE (with wave) ----------
+      // About cards stagger reveal
+      gsap.from(".about-card", {
+        scrollTrigger: { trigger: "#about", start: "top 80%" },
+        opacity: 0,
+        y: 40,
+        duration: 1,
+        stagger: 0.2,
+        ease: "power3.out"
+      });
+
+      // ---------- CONTACT DRIP ----------
+      const input = document.getElementById('dripInput');
+      input.addEventListener('input', function() {
+        this.classList.add('drip-effect');
+        setTimeout(() => this.classList.remove('drip-effect'), 200);
+      });
+
+      // ---------- MODE TOGGLE ----------
       const toggleBtn = document.getElementById('modeToggle');
       const wave = document.getElementById('modeWave');
       const body = document.body;
-
       toggleBtn.addEventListener('click', () => {
-        // trigger wave
         wave.classList.add('active');
-        // after wave starts, toggle mode
         setTimeout(() => {
           body.classList.toggle('light-mode');
           toggleBtn.textContent = body.classList.contains('light-mode') ? '☀️ LIGHT' : '🌑 INK';
-        }, 200);
-        // remove wave after animation
-        setTimeout(() => {
-          wave.classList.remove('active');
-        }, 1000);
+        }, 150);
+        setTimeout(() => wave.classList.remove('active'), 1000);
       });
 
-      // ---------- INK-DROP TRANSITION (simulate on nav/clicks) ----------
-      // We'll use it on any internal link click (like service cards could be links)
+      // ---------- INK DROP TRANSITION (only on nav logo) ----------
       const inkOverlay = document.getElementById('inkOverlay');
-      function triggerInkDrop(x, y, callback) {
-        if (x && y) {
-          inkOverlay.style.transformOrigin = `${x}px ${y}px`;
-        } else {
-          inkOverlay.style.transformOrigin = 'center';
-        }
+      function triggerInkDrop(x, y) {
+        if (x && y) inkOverlay.style.transformOrigin = `${x}px ${y}px`;
+        else inkOverlay.style.transformOrigin = 'center';
         inkOverlay.classList.add('active');
-        setTimeout(() => {
-          if (callback) callback();
-          setTimeout(() => {
-            inkOverlay.classList.remove('active');
-          }, 800);
-        }, 400);
+        setTimeout(() => inkOverlay.classList.remove('active'), 900);
       }
 
-      // Attach to any link or button that should trigger page transition
-      document.querySelectorAll('.service-card, .gallery-item, .mode-toggle').forEach(el => {
-        el.addEventListener('click', (e) => {
-          e.preventDefault();
-          const rect = el.getBoundingClientRect();
-          const x = rect.left + rect.width/2;
-          const y = rect.top + rect.height/2;
-          triggerInkDrop(x, y, () => {
-            console.log('ink transition complete – you could load new content here');
-          });
-        });
-      });
-
-      // Also for nav dummy links
+      // Only trigger ink drop when clicking the O‑INK logo (nav)
       document.querySelector('nav').addEventListener('click', (e) => {
         e.preventDefault();
-        triggerInkDrop(window.innerWidth/2, window.innerHeight/2);
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = rect.left + rect.width/2;
+        const y = rect.top + rect.height/2;
+        triggerInkDrop(x, y);
       });
 
-      // ---------- LIGHT MODE INIT (default dark) ----------
-      // ensure toggle text matches
+      // Ensure toggle text matches initial mode
       toggleBtn.textContent = '🌑 INK';
     })();
   </script>
-  <!-- little extra style to make images work -->
-  <style>
-    .gallery-item img { width:100%; height:100%; object-fit:cover; }
-    body.light-mode .gallery-item { background: #ccc; }
-    .big-input { color:inherit; }
-    body.light-mode .big-input { border-bottom-color:#FF5F1F; }
-    .drip-effect { animation: drip 0.15s ease-out; }
-    .mode-wave.active { left:100%; }
-    .mode-wave { left:-100%; } /* start off left */
-  </style>
 </body>
 </html>
