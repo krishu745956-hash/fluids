@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>O‑INK · The Kinetic Ink Studio</title>
+  <!-- Fonts & base styling -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    /* RESET & GLOBAL */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      cursor: none; /* hide default cursor – we'll draw our own */
+    }
+
+    body {
+      background-color: #1A1A1A; /* matte charcoal */
+      color: #F5F5F5;
+      font-family: "Inter", sans-serif;
+      transition: background-color 0.6s cubic-bezier(0.23, 1, 0.32, 1), color 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+      overflow-x: hidden;
+    }
+
+    /* LIGHT MODE (toggled by .light-mode class) */
+    body.light-mode {
+      background-color: #F5F5F5;
+      color: #1A1A1A;
+    }
+
+    body.light-mode .card,
+    body.light-mode .gallery-item {
+      background-color: #e0e0e0;
+    }
+
+    /* custom selection */
+    ::selection {
+      background: #FF5F1F;
+      color: #1A1A1A;
+    }
+
+    /* SMOOTH SCROLL container */
+    html.lenis {
+      height: auto;
+    }
+    .lenis.lenis-smooth {
+      scroll-behavior: auto;
+    }
+    .lenis.lenis-smooth [data-lenis-prevent] {
+      overscroll-behavior: contain;
+    }
+
+    /* ORANGE THREAD CURSOR */
+    .cursor {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      background: #FF5F1F;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: width 0.2s, height 0.2s, backdrop-filter 0.2s, background 0.2s;
+      backdrop-filter: invert(0);
+      will-change: transform, width, height;
+      mix-blend-mode: normal; /* we'll use backdrop-filter for inversion */
+    }
+
+    .cursor.expanded {
+      width: 60px;
+      height: 60px;
+      backdrop-filter: invert(1); /* inverts everything behind the orange circle */
+      background: #FF5F1F;        /* stays orange */
+    }
+
+    /* hide cursor when it leaves window */
+    .cursor.hide {
+      opacity: 0;
+    }
+
+    /* INK-DROP TRANSITION OVERLAY */
+    .ink-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #FF5F1F;
+      border-radius: 50%;
+      transform: scale(0);
+      pointer-events: none;
+      z-index: 10000;
+      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: transform;
+    }
+
+    .ink-overlay.active {
+      transform: scale(3); /* covers the screen */
+    }
+
+    /* HIGHlIGHTER MODE WAVE */
+    .mode-wave {
+      position: fixed;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: #FF5F1F;
+      z-index: 10001;
+      pointer-events: none;
+      transition: left 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .mode-wave.active {
+      left: 100%;
+    }
+
+    /* TYPOGRAPHY */
+    h1, h2, h3 {
+      font-family: "Playfair Display", serif;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    .section {
+      padding: 5rem 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .hero h1 {
+      font-size: clamp(4rem, 15vw, 10rem);
+      line-height: 0.9;
+      color: #1A1A1A; /* black in default mode */
+      transition: color 0.3s;
+      text-shadow: 0 0 20px rgba(255,95,31,0.2);
+    }
+    body.light-mode .hero h1 {
+      color: #F5F5F5; /* white in light mode – inverted logic to maintain contrast? Actually light mode background is white, so text should be black. But we want the headline to be black in light mode too? Let's keep it simple: light mode text dark. */
+    }
+    body.light-mode .hero h1 {
+      color: #1A1A1A;
+    }
+
+    /* WORK GALLERY */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+
+    .gallery-item {
+      aspect-ratio: 4/3;
+      background: #333;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+      filter: grayscale(1);
+      transition: filter 0.5s;
+    }
+
+    .gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .gallery-item:hover {
+      filter: grayscale(0);
+    }
+
+    .gallery-item::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 2px solid transparent;
+      transition: border 0.3s;
+      pointer-events: none;
+    }
+
+    .gallery-item:hover::after {
+      border: 2px solid #FF5F1F;
+      animation: snakeBorder 1.5s linear infinite;
+    }
+
+    @keyframes snakeBorder {
+      0% { border-color: #FF5F1F; box-shadow: 0 0 0 0 #FF5F1F; }
+      50% { border-color: #FF5F1F; box-shadow: 0 0 15px 5px #FF5F1F; }
+      100% { border-color: #FF5F1F; box-shadow: 0 0 0 0 #FF5F1F; }
+    }
+
+    /* SERVICES */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+
+    .service-card {
+      background: rgba(255,255,255,0.05);
+      padding: 2rem;
+      border-radius: 8px;
+      transition: all 0.4s;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    body.light-mode .service-card {
+      background: rgba(0,0,0,0.03);
+    }
+
+    .service-card.selected {
+      background: #1A1A1A;
+      color: #FF5F1F;
+      border-color: #FF5F1F;
+      box-shadow: 0 0 30px rgba(255,95,31,0.3);
+    }
+
+    body.light-mode .service-card.selected {
+      background: #F5F5F5;
+      color: #FF5F1F;
+      border-color: #FF5F1F;
+    }
+
+    /* CONTACT */
+    .contact-field {
+      margin-top: 4rem;
+      text-align: center;
+    }
+
+    .big-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid #FF5F1F;
+      font-size: clamp(2rem, 8vw, 6rem);
+      font-family: "Playfair Display", serif;
+      color: inherit;
+      padding: 0.5rem 0;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .big-input:focus {
+      border-bottom-color: #FF5F1F;
+      transform: scale(1.02);
+    }
+
+    .drip-effect {
+      display: inline-block;
+      animation: drip 0.15s ease-out;
+    }
+
+    @keyframes drip {
+      0% { transform: translateY(0); }
+      30% { transform: translateY(5px); opacity: 0.9; }
+      100% { transform: translateY(0); }
+    }
+
+    /* TOGGLE */
+    .mode-toggle {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      z-index: 100;
+      background: #FF5F1F;
+      color: #1A1A1A;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 40px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      cursor: pointer;
+      overflow: hidden;
+      transition: transform 0.2s;
+    }
+
+    .mode-toggle:hover {
+      transform: scale(1.05);
+    }
+
+    /* INK THREAD LINKS (for hover effect) */
+    a, button, .gallery-item, .service-card {
+      cursor: none; /* we handle cursor */
+    }
+
+    /* scroll typography demo – we'll use GSAP to stretch h2 on scroll */
+    h2 {
+      font-size: 3rem;
+      margin-bottom: 2rem;
+      display: inline-block;
+      transition: font-stretch 0.1s; /* will be overridden by GSAP */
+    }
+
+    /* ----- FOOTER (development notice) ----- */
+    .dev-footer {
+      text-align: center;
+      padding: 3rem 2rem 4rem;
+      font-size: 0.95rem;
+      opacity: 0.8;
+      border-top: 1px dashed rgba(255,95,31,0.3);
+      margin-top: 2rem;
+      letter-spacing: 0.3px;
+    }
+    .dev-footer span.orange {
+      color: #FF5F1F;
+      font-weight: 600;
+    }
+    body.light-mode .dev-footer {
+      border-top-color: rgba(255,95,31,0.5);
+    }
+  </style>
+  <!-- GSAP & Lenis -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/lenis@1.1.5/dist/lenis.min.js"></script>
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <!-- Ink drop transition overlay -->
+  <div class="ink-overlay" id="inkOverlay"></div>
+
+  <!-- Highlighter mode wave -->
+  <div class="mode-wave" id="modeWave"></div>
+
+  <!-- Custom cursor -->
+  <div class="cursor" id="customCursor"></div>
+
+  <!-- Mode toggle -->
+  <button class="mode-toggle" id="modeToggle">🌑 INK</button>
+
+  <!-- Navigation (simple) -->
+  <nav style="position:fixed; top:2rem; left:2rem; z-index:100; color:#FF5F1F; font-weight:bold;">O-INK</nav>
+
+  <main data-lenis-prevent>
+    <!-- HERO -->
+    <section class="hero" id="hero">
+      <canvas id="heroCanvas"></canvas>
+      <h1 id="heroHeadline">INK<br>IS MOTION</h1>
+    </section>
+
+    <!-- WORK -->
+    <section class="section" id="work">
+      <h2>Work</h2>
+      <div class="gallery-grid">
+        <div class="gallery-item"><img src="https://picsum.photos/600/400?random=1" alt="work"></div>
+        <div class="gallery-item"><img src="https://picsum.photos/600/400?random=2" alt="work"></div>
+        <div class="gallery-item"><img src="https://picsum.photos/600/400?random=3" alt="work"></div>
+        <div class="gallery-item"><img src="https://picsum.photos/600/400?random=4" alt="work"></div>
+      </div>
+    </section>
+
+    <!-- SERVICES -->
+    <section class="section" id="services">
+      <h2>Services</h2>
+      <div class="services-grid" id="servicesGrid">
+        <div class="service-card" data-service="brand">Brand Identity</div>
+        <div class="service-card" data-service="motion">Motion Design</div>
+        <div class="service-card" data-service="digital">Digital Experiences</div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section class="section" id="contact">
+      <h2>Drop us a line</h2>
+      <div class="contact-field">
+        <input type="text" class="big-input" id="dripInput" placeholder="Your message..." autocomplete="off">
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER with development message & credit (Uday Raj Shukla) -->
+  <footer class="dev-footer">
+    <span class="orange">⚡ O‑INK · project development phase</span> — full interactive rollout scheduled for <span class="orange">July 2026</span> · by Uday Raj Shukla
+  </footer>
+
+  <script>
+    (function() {
+      // ---------- INIT LENIS (smooth scroll) ----------
+      const lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        orientation: 'vertical',
+        smoothWheel: true,
+      });
+      function raf(time) {
+        lenis.raf(time);
+        requestAnimationFrame(raf);
+      }
+      requestAnimationFrame(raf);
+
+      // ---------- CUSTOM CURSOR (Orange Thread) ----------
+      const cursor = document.getElementById('customCursor');
+      let mouseX = 0, mouseY = 0;
+      let cursorVisible = true;
+
+      document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        cursor.style.transform = `translate(${mouseX}px, ${mouseY}px) translate(-50%, -50%)`;
+        if (!cursorVisible) {
+          cursor.classList.remove('hide');
+          cursorVisible = true;
+        }
+      });
+
+      document.addEventListener('mouseleave', () => {
+        cursor.classList.add('hide');
+        cursorVisible = false;
+      });
+
+      // Hover elements to expand cursor and invert
+      const hoverables = document.querySelectorAll('a, button, .gallery-item, .service-card, .mode-toggle, .big-input');
+      hoverables.forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('expanded'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('expanded'));
+      });
+
+      // ---------- THREE.JS BLOB (hero canvas) ----------
+      const canvas = document.getElementById('heroCanvas');
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+
+      // Create a sphere with custom shader for liquid effect
+      const geometry = new THREE.SphereGeometry(2, 128, 128);
+
+      // Vertex shader: displace based on time + mouse
+      const vertexShader = `
+        uniform float uTime;
+        uniform vec2 uMouse;
+        varying float vDisplace;
+        void main() {
+          vec3 pos = position;
+          float noise = sin(pos.x * 3.0 + uTime) * cos(pos.y * 3.0 + uTime) * sin(pos.z * 3.0 + uTime);
+          noise += sin(pos.x * 5.0 + uTime*1.3) * cos(pos.y * 5.0 + uTime*0.7) * sin(pos.z * 5.0 + uTime*2.0);
+          // influence from mouse (normalized direction)
+          float mouseInfluence = sin(pos.x * 2.0 + uMouse.x * 10.0) * cos(pos.z * 2.0 + uMouse.y * 10.0);
+          float displace = noise * 0.3 + mouseInfluence * 0.2;
+          vDisplace = displace;
+          pos += normal * displace;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+        }
+      `;
+
+      const fragmentShader = `
+        uniform float uTime;
+        varying float vDisplace;
+        void main() {
+          float intensity = 0.8 + 0.5 * sin(vDisplace * 10.0 + uTime * 2.0);
+          gl_FragColor = vec4(1.0, 0.37, 0.12, intensity * 0.6); // Orange with alpha
+        }
+      `;
+
+      const material = new THREE.ShaderMaterial({
+        vertexShader: vertexShader,
+        fragmentShader: fragmentShader,
+        transparent: true,
+        blending: THREE.NormalBlending,
+        side: THREE.DoubleSide,
+        uniforms: {
+          uTime: { value: 0 },
+          uMouse: { value: new THREE.Vector2(0, 0) }
+        }
+      });
+
+      const sphere = new THREE.Mesh(geometry, material);
+      scene.add(sphere);
+
+      camera.position.z = 5;
+
+      // Mouse tracking for blob
+      const mouse = new THREE.Vector2(0, 0);
+      window.addEventListener('mousemove', (e) => {
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      });
+
+      // Animation loop
+      let clock = new THREE.Clock();
+      function animateBlob() {
+        requestAnimationFrame(animateBlob);
+        const delta = clock.getDelta();
+        const elapsedTime = performance.now() / 1000; // seconds
+
+        // Update uniforms
+        material.uniforms.uTime.value = elapsedTime;
+        material.uniforms.uMouse.value.lerp(mouse, 0.05);
+
+        // subtle rotation
+        sphere.rotation.y += 0.002;
+        sphere.rotation.x += 0.001;
+
+        renderer.render(scene, camera);
+      }
+      animateBlob();
+
+      // resize handler
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // ---------- GSAP SCROLL TRIGGER (variable typography) ----------
+      gsap.registerPlugin(ScrollTrigger);
+
+      // Stretch headline on scroll
+      gsap.to("#heroHeadline", {
+        scrollTrigger: {
+          trigger: "body",
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 1.5,
+        },
+        fontStretch: "expanded",  // only works if font supports it – we'll use scaleX as fallback
+        scaleX: 1.3,
+        transformOrigin: "center center",
+        ease: "none"
+      });
+
+      // Also stretch section titles a bit
+      gsap.utils.toArray("h2").forEach(title => {
+        gsap.to(title, {
+          scrollTrigger: {
+            trigger: title,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: 1,
+          },
+          scaleX: 1.2,
+          transformOrigin: "left center",
+        });
+      });
+
+      // ---------- SERVICES CLICK (background shift) ----------
+      const serviceCards = document.querySelectorAll('.service-card');
+      serviceCards.forEach(card => {
+        card.addEventListener('click', function() {
+          // remove selected from others
+          serviceCards.forEach(c => c.classList.remove('selected'));
+          this.classList.add('selected');
+          // optional: change body background? No, keep consistent.
+        });
+      });
+
+      // ---------- CONTACT INPUT DRIP EFFECT ----------
+      const input = document.getElementById('dripInput');
+      input.addEventListener('input', function(e) {
+        // simple drip: add class to each character? too heavy.
+        // we'll add a class to the input that triggers a shake/drip
+        this.classList.add('drip-effect');
+        setTimeout(() => this.classList.remove('drip-effect'), 150);
+      });
+
+      // ---------- HIGHLIGHTER MODE TOGGLE (with wave) ----------
+      const toggleBtn = document.getElementById('modeToggle');
+      const wave = document.getElementById('modeWave');
+      const body = document.body;
+
+      toggleBtn.addEventListener('click', () => {
+        // trigger wave
+        wave.classList.add('active');
+        // after wave starts, toggle mode
+        setTimeout(() => {
+          body.classList.toggle('light-mode');
+          toggleBtn.textContent = body.classList.contains('light-mode') ? '☀️ LIGHT' : '🌑 INK';
+        }, 200);
+        // remove wave after animation
+        setTimeout(() => {
+          wave.classList.remove('active');
+        }, 1000);
+      });
+
+      // ---------- INK-DROP TRANSITION (simulate on nav/clicks) ----------
+      // We'll use it on any internal link click (like service cards could be links)
+      const inkOverlay = document.getElementById('inkOverlay');
+      function triggerInkDrop(x, y, callback) {
+        if (x && y) {
+          inkOverlay.style.transformOrigin = `${x}px ${y}px`;
+        } else {
+          inkOverlay.style.transformOrigin = 'center';
+        }
+        inkOverlay.classList.add('active');
+        setTimeout(() => {
+          if (callback) callback();
+          setTimeout(() => {
+            inkOverlay.classList.remove('active');
+          }, 800);
+        }, 400);
+      }
+
+      // Attach to any link or button that should trigger page transition
+      document.querySelectorAll('.service-card, .gallery-item, .mode-toggle').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.preventDefault();
+          const rect = el.getBoundingClientRect();
+          const x = rect.left + rect.width/2;
+          const y = rect.top + rect.height/2;
+          triggerInkDrop(x, y, () => {
+            console.log('ink transition complete – you could load new content here');
+          });
+        });
+      });
+
+      // Also for nav dummy links
+      document.querySelector('nav').addEventListener('click', (e) => {
+        e.preventDefault();
+        triggerInkDrop(window.innerWidth/2, window.innerHeight/2);
+      });
+
+      // ---------- LIGHT MODE INIT (default dark) ----------
+      // ensure toggle text matches
+      toggleBtn.textContent = '🌑 INK';
+    })();
+  </script>
+  <!-- little extra style to make images work -->
+  <style>
+    .gallery-item img { width:100%; height:100%; object-fit:cover; }
+    body.light-mode .gallery-item { background: #ccc; }
+    .big-input { color:inherit; }
+    body.light-mode .big-input { border-bottom-color:#FF5F1F; }
+    .drip-effect { animation: drip 0.15s ease-out; }
+    .mode-wave.active { left:100%; }
+    .mode-wave { left:-100%; } /* start off left */
+  </style>
+</body>
+</html>
